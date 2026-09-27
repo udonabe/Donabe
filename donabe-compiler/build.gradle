@@ -1,0 +1,88 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'jacoco'
+    id 'org.beryx.jlink' version '4.1.1'
+}
+
+group = 'io.github.udonabe'
+version = '0.1.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Source: https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
+    implementation 'org.apache.commons:commons-lang3:3.20.0'
+    // Source: https://mvnrepository.com/artifact/org.slf4j/slf4j-api
+    implementation 'org.slf4j:slf4j-api:2.0.19'
+    // Source: https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
+    implementation 'ch.qos.logback:logback-classic:1.6.3'
+    // Source: https://mvnrepository.com/artifact/info.picocli/picocli
+    implementation 'info.picocli:picocli:4.7.7'
+
+    testImplementation platform('org.junit:junit-bom:6.1.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    // Source: https://mvnrepository.com/artifact/com.google.code.gson/gson
+    testImplementation 'com.google.code.gson:gson:2.14.0'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
+
+application {
+    mainModule = "io.github.udonabe.donabe"
+    mainClass = "io.github.udonabe.donabe.Main"
+}
+
+jlink {
+    launcher {
+        name = 'donabec'
+    }
+    
+    jpackage {
+        imageName = 'donabec'
+        outputDir = 'jpackage'
+        skipInstaller = true
+        imageOptions = ['--win-console']
+    }
+}
+
+tasks.register("runTest", JavaExec) {
+    group = "application"
+    description = "Run test.dnb with verbose logging"
+
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = application.mainClass
+    standardInput = System.in
+    args("--verbose", "-d", "../donabe-output", "../test.dnb")
+}
+
+tasks.named("run") {
+    standardInput = System.in
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.test {
+    finalizedBy tasks.jacocoTestReport
+}
+
+tasks.jacocoTestReport {
+    dependsOn tasks.test
+    reports {
+        html.required = true
+        xml.required = true
+    }
+}
