@@ -4,7 +4,7 @@ Donabeは、学習を目的として開発しているプログラミング言�
 
 ## 概要
 
-Donabeは、静的型付けのIRインタプリタ言語、またはVM言語として実装しています。実行時にどちらを使うか選択可能です。
+Donabeは、VM言語として実装しています。
 
 書きやすいC系文法の言語を目指しています。
 
@@ -49,6 +49,8 @@ How many do you want to generate?>
 ### 必要なもの
 
 - Gitを使えるソフトウェア
+- Cargo
+- Rust
 
 ### ビルド
 
@@ -59,23 +61,25 @@ How many do you want to generate?>
 ```
 
 ## 使い方
+### 開発目的での実行方法
+jpackageに対応しているので、それ経由での実行も可能ですが、開発目的での実行は以下のやり方をおすすめします。
 
-以下のように実行できます。
-jpackageなどにはまだ未対応ですので、gradle経由で実行してください。
-```bash
-./gradlew run --args="<実行したいソースファイル>"
-```
-
-例えば、次のプログラムを `example.dnb` として保存します。
-
+次のプログラムを `test.dnb` へ保存します。
 ```donabe
-print("Hello, World!");
+func main() -> Void {
+  print("Hello, World!");
+}
 ```
 
-その後、以下のコマンドを実行します。
-
+その後、以下のコマンドを実行し、コンパイルします。
+これにより、`output`ディレクトリへファイルが生成されます。
 ```bash
-./gradlew run --args="example.dnb"
+./gradlew :donabe-compiler:runTest
+```
+
+最後に、`donabe-vm`ディレクトリへ移動し、以下のコマンドを実行します。
+```
+cargo run -- ../donabe-output/test.dnbc
 ```
 実行結果:
 ```text
@@ -269,15 +273,17 @@ Donabeの処理系は、現在以下のような流れでプログラムを処�
     ↓
   型解析
     ↓
-  IR生成      →   コンパイラ
-    ↓                ↓
-IRインタプリタ      エンコーダ
-    ↓                ↓
-   実行           バイトコード
-                     ↓
-                     VM
-                     ↓
-                    実行
+  IR生成
+    ↓
+ コンパイラ
+    ↓
+ エンコーダ
+    ↓
+バイトコード
+    ↓
+    VM
+    ↓
+   実行
 ```
 
 ### 各処理の説明
@@ -297,8 +303,6 @@ IRインタプリタ      エンコーダ
 プログラムの型を検査します。型に不整合があればエラーとなります。
 #### IR生成
 名前解決と意味解析が済んだASTを、より低レベルな表現であるIRへ変換します。
-#### IRインタプリタ
-IRを線形にたどり、実行します。
 #### コンパイラ
 IRと名前解決結果の情報から、バイトコードを生成します。
 #### エンコーダ
@@ -307,17 +311,44 @@ IRと名前解決結果の情報から、バイトコードを生成します。
 バイトコードを実行します。
 ## ディレクトリ構成
 
-現在のディレクトリ構成は以下のようになっています。
-
 ```text
 Donabe/
-├── Donabe-VM
-├── src/main/java
-│   └── ソースコード
-├── src/test/java
-│   └── テストコード
+├── build.gradle
+├── settings.gradle
+├── gradlew
+├── gradlew.bat
+├── gradle/
+│
+├── donabe-compiler/
+│   ├── build.gradle
+│   └── src/
+│       ├── main/
+│       │   └── java/
+│       │       └── ソースコード
+│       └── test/
+│           ├── java/
+│           │   └── テストコード
+│           └── resources/
+│               └── integration/
+│                   ├── *.dnb
+│                   └── *.dump
+│
+├── donabe-vm/
+│   ├── Cargo.toml
+│   ├── Cargo.lock
+│   └── src/
+│       └── Rustソースコード
+│
+├── docs/
+│   └── 構文・仕様書
+│
 └── README.md
 ```
+
+Java製のコンパイラは `donabe-compiler`、Rust製のVMは `donabe-vm` に分離されています。
+
+また、コンパイラの統合テスト用ファイルは `donabe-compiler/src/test/resources/integration/` に配置され、`.dnb` の入力と対応する `.dump` を用いてコンパイラ全体をテストします。
+
 
 ## 開発状況
 
@@ -346,14 +377,14 @@ Donabe/
 今後は以下の機能を実装する予定です。
 
 - 複数ファイル化
-- ルートスコープの用途の制限
+- ユーザー定義型
 
 ## 開発
 
 ### リポジトリの取得
 
 ```bash
-git clone https://github.com/udo-nabe/Donabe.git
+git clone https://github.com/udonabe/Donabe.git
 cd Donabe
 ```
 
