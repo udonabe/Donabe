@@ -45,14 +45,19 @@ public class Main implements Callable<Integer> {
     }
 
     @CommandLine.Parameters(index = "0",
-            description = "Source file",
+            description = "Source file.",
             paramLabel = "<file>")
-    Path sourceFile;
+    private Path sourceFile;
+    @CommandLine.Option(
+            names = {"-d", "--output-dir"},
+            description = "Output directory. If it does not exist, it will be created."
+    )
+    private Path outputDir;
     @CommandLine.Option(
             names = {"--verbose"},
-            description = "Enable verbose logging"
+            description = "Enable verbose logging."
     )
-    boolean verbose;
+    private boolean verbose;
 
     public static void main(String[] args) {
         int exitCode = new CommandLine(new Main()).execute(args);
@@ -67,6 +72,11 @@ public class Main implements Callable<Integer> {
             
             if (!sourceFile.toString().endsWith(".dnb")) {
                 System.err.println("Error: Source file must have a .dnb extension.");
+                return 1;
+            }
+            
+            if (outputDir != null && Files.isRegularFile(outputDir)) {
+                System.err.println("Error: Output directory must be a directory.");
                 return 1;
             }
 
@@ -130,9 +140,17 @@ public class Main implements Callable<Integer> {
     private void writeFile(Path source, byte[] encoded) throws IOException {
         //拡張子.dnbを.dnbcへ書き換える
         String sourceFilename = source.getFileName().toString();
-        Path outPath = source.resolveSibling(
-                sourceFilename.substring(0, sourceFilename.length() - 4) + ".dnbc"
-        );
+        String outputFilename = sourceFilename.substring(0, sourceFilename.length() - 4) + ".dnbc";
+        log.debug("Output file name: {}", outputFilename);
+        
+        Path outPath;
+        if (outputDir != null) {
+            Files.createDirectories(outputDir);
+            outPath = outputDir.toAbsolutePath().resolve(outputFilename);
+        } else {
+            outPath = Path.of(".").toAbsolutePath().resolve(outputFilename);
+        }
+        
         log.debug("Output file: {}", outPath);
         
         try (OutputStream out = Files.newOutputStream(outPath)) {
