@@ -18,7 +18,7 @@ dependencies {
     // Source: https://mvnrepository.com/artifact/org.slf4j/slf4j-api
     implementation 'org.slf4j:slf4j-api:2.0.20'
     // Source: https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
-    implementation 'ch.qos.logback:logback-classic:1.6.3'
+    implementation 'ch.qos.logback:logback-classic:1.6.5'
     // Source: https://mvnrepository.com/artifact/info.picocli/picocli
     implementation 'info.picocli:picocli:4.7.7'
 
